@@ -1,6 +1,10 @@
 import tkinter as tk
 import tkinter.filedialog
 from tkinter import *
+import pandas as pd
+from ratio_functions import mean_absolute_error,mean_square_error,mean_absolute_percentage_error,root_mean_square_error
+
+pd.set_option("display.precision", 10)
 
 class ModelCompareApp:
     def __init__(self, root):
@@ -44,4 +48,28 @@ class ModelCompareApp:
             self.analyze_button.config(state=tk.DISABLED)
 
     def analyze(self):
-        pass
+
+        data = pd.read_csv(self.file_path, sep=",")
+        print(data)
+        if self.model_type.get() == 'regresja':
+            try:
+                true_values = data['rzeczywista']
+                model1_preds = data['przewidywana1']
+                model2_preds = data['przewidywana2']
+                print(model1_preds)
+                print(model2_preds)
+
+                MAE_model1 = mean_absolute_error(true_values,model1_preds)
+                MSE_model1 = mean_square_error(true_values,model1_preds)
+                RMSE_model1 = root_mean_square_error(true_values,model1_preds)
+                MAPE_model1 = mean_absolute_percentage_error(true_values,model1_preds)
+                print("MAE model1: ",MAE_model1)
+                print("MSE model1: ", MSE_model1)
+                print("RMSE model1: ", RMSE_model1)
+                print("MAPE model1: ", MAPE_model1)
+
+            except NameError:
+                raise NameError("Nie znaleziono nazw tabel w data")
+
+
+
