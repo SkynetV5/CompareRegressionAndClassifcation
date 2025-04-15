@@ -20,6 +20,5 @@ def mean_absolute_percentage_error(true,pred):
     n = len(true)
     total_error = 0
     for y_true, y_pred in zip(true,pred):
-        if true != 0:
-            total_error += abs((y_true - y_pred)/ y_true)
+        total_error += abs((y_true - y_pred)/ y_true)
     return (100 * total_error) / n
