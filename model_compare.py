@@ -166,8 +166,6 @@ class ModelCompareApp:
                     colnames=["Przewidywana"],
                 )
 
-                print(conf_matrix_model_2)
-
                 tp = conf_matrix_model_2.iloc[1, 1]
                 tn = conf_matrix_model_2.iloc[0, 0]
                 fp = conf_matrix_model_2.iloc[0, 1]
@@ -245,7 +243,7 @@ class ModelCompareApp:
                 data["income"] = data["income"].map({">50K": 1, "<=50K": 0})
                 data["C50_PV"] = data["C50_PV"].map({">50K": 1, "<=50K": 0})
                 data["rf_PV"] = data["rf_PV"].map({">50K": 1, "<=50K": 0})
-                print(data)
+
                 true_values = data["income"]
 
                 results_window = Toplevel(self.root)
@@ -266,10 +264,24 @@ class ModelResultsApp:
     def __init__(self, root):
         self.root = root
 
-        self.models_frame = tk.Canvas(self.root)
-        self.models_frame.pack(pady=10)
+        self.root.geometry("1050x700")
+        root.resizable(False, False)
 
-        self.scrollable_frame = tk.Frame(self.models_frame)
+        self.canvas = tk.Canvas(root)
+        self.canvas.pack(fill="both", expand=True)
+        self.scrollbar = tk.Scrollbar(
+            root, orient="vertical", command=self.canvas.yview
+        )
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.scrollable_frame = tk.Frame(self.canvas)
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.models_frame = tk.Frame(self.scrollable_frame)
+        self.models_frame.pack(pady=10)
 
         self.model1_matrices_label = tk.LabelFrame(
             self.models_frame, text="Model 1", padx=10, pady=10
@@ -290,7 +302,7 @@ class ModelResultsApp:
         self.model2_conf_matrix = tk.Frame(self.conf_matrices_frame)
         self.model2_conf_matrix.pack(side="left", padx=20)
 
-        self.results_frame = tk.Frame(self.root)
+        self.results_frame = tk.Frame(self.scrollable_frame)
         self.results_frame.pack(pady=10)
 
         self.model1_results = tk.LabelFrame(
@@ -303,7 +315,7 @@ class ModelResultsApp:
         )
         self.model2_results.pack(side="left", padx=10)
 
-        self.chart_container = tk.Frame(self.root)
+        self.chart_container = tk.Frame(self.scrollable_frame)
         self.chart_container.pack(pady=10)
 
         self.chart_frame_model1 = tk.Frame(self.chart_container)
@@ -314,7 +326,7 @@ class ModelResultsApp:
 
         self.scrollable_frame.bind(
             "<Configure>",
-            self.models_frame.configure(scrollregion=self.models_frame.bbox("all")),
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
         )
         self.models_frame.bind_all("<MouseWheel>", self._on_mousewheel)
 
@@ -326,7 +338,7 @@ class ModelResultsApp:
             # Dla niektórych systemów
             scroll = event.num
 
-        self.models_frame.yview_scroll(scroll, "units")
+        self.canvas.yview_scroll(scroll, "units")
 
     def display_results_regression(
         self,
@@ -420,7 +432,7 @@ class ModelResultsApp:
 
         tk.Label(
             self.model2_matrices_label,
-            text="Przewidziane ↓",
+            text="Przewidywane ↓",
             font=("Arial", 10, "italic"),
         ).grid(row=0, column=2)
         tk.Label(
