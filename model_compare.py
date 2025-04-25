@@ -166,6 +166,8 @@ class ModelCompareApp:
                     colnames=["Przewidywana"],
                 )
 
+                print(conf_matrix_model_2)
+
                 tp = conf_matrix_model_2.iloc[1, 1]
                 tn = conf_matrix_model_2.iloc[0, 0]
                 fp = conf_matrix_model_2.iloc[0, 1]
@@ -249,6 +251,9 @@ class ModelCompareApp:
                 results_window = Toplevel(self.root)
                 results_window.title("Wyniki analizy klasyfikacji binarnej")
                 app_results = ModelResultsApp(results_window)
+                app_results.show_confusion_matrix_in_tk(
+                    conf_matrix_model_1, conf_matrix_model_2
+                )
                 app_results.display_results_classification(
                     classification_models, model1_prob, model2_prob, true_values
                 )
@@ -260,6 +265,30 @@ class ModelCompareApp:
 class ModelResultsApp:
     def __init__(self, root):
         self.root = root
+
+        self.models_frame = tk.Canvas(self.root)
+        self.models_frame.pack(pady=10)
+
+        self.scrollable_frame = tk.Frame(self.models_frame)
+
+        self.model1_matrices_label = tk.LabelFrame(
+            self.models_frame, text="Model 1", padx=10, pady=10
+        )
+        self.model1_matrices_label.pack(side="left", padx=10)
+
+        self.model2_matrices_label = tk.LabelFrame(
+            self.models_frame, text="Model 2", padx=10, pady=10
+        )
+        self.model2_matrices_label.pack(side="left", padx=10)
+
+        self.conf_matrices_frame = tk.Frame(self.models_frame)
+        self.conf_matrices_frame.pack(side="top")
+
+        self.model1_conf_matrix = tk.Frame(self.conf_matrices_frame)
+        self.model1_conf_matrix.pack(side="left", padx=20)
+
+        self.model2_conf_matrix = tk.Frame(self.conf_matrices_frame)
+        self.model2_conf_matrix.pack(side="left", padx=20)
 
         self.results_frame = tk.Frame(self.root)
         self.results_frame.pack(pady=10)
@@ -282,6 +311,22 @@ class ModelResultsApp:
 
         self.chart_frame_model2 = tk.Frame(self.chart_container)
         self.chart_frame_model2.pack(side="left", padx=10)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            self.models_frame.configure(scrollregion=self.models_frame.bbox("all")),
+        )
+        self.models_frame.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _on_mousewheel(self, event):
+        # Przewijaj canvas przy użyciu kółka myszy (Windows/macOS)
+        if event.delta:
+            scroll = -1 if event.delta > 0 else 1
+        else:
+            # Dla niektórych systemów
+            scroll = event.num
+
+        self.models_frame.yview_scroll(scroll, "units")
 
     def display_results_regression(
         self,
@@ -344,3 +389,58 @@ class ModelResultsApp:
 
         draw_curve_ROC(true_values, model1_prob, "Model1", self.chart_frame_model1)
         draw_curve_ROC(true_values, model2_prob, "Model2", self.chart_frame_model2)
+
+    def show_confusion_matrix_in_tk(self, conf_matrix1, conf_matrix2):
+
+        tk.Label(
+            self.model1_matrices_label,
+            text="Przewidziane ↓",
+            font=("Arial", 10, "italic"),
+        ).grid(row=0, column=2)
+        tk.Label(
+            self.model1_matrices_label,
+            text="Rzeczywiste →",
+            font=("Arial", 10, "italic"),
+        ).grid(row=2, column=0, sticky="w")
+        for j, col_name in enumerate(conf_matrix1.columns):
+            tk.Label(
+                self.model1_matrices_label, text=col_name, font=("Arial", 10, "bold")
+            ).grid(row=1, column=j + 2, padx=5, pady=5)
+
+        for i, row_name in enumerate(conf_matrix1.index):
+            tk.Label(
+                self.model1_matrices_label, text=row_name, font=("Arial", 10, "bold")
+            ).grid(row=i + 2, column=1, padx=5, pady=5)
+            for j, col_name in enumerate(conf_matrix1.columns):
+                value = conf_matrix1.loc[row_name, col_name]
+                font_style = ("Arial", 10, "bold") if i == j else ("Arial", 10)
+                tk.Label(
+                    self.model1_matrices_label, text=str(value), font=font_style
+                ).grid(row=i + 2, column=j + 2, padx=5, pady=5)
+
+        tk.Label(
+            self.model2_matrices_label,
+            text="Przewidziane ↓",
+            font=("Arial", 10, "italic"),
+        ).grid(row=0, column=2)
+        tk.Label(
+            self.model2_matrices_label,
+            text="Rzeczywiste →",
+            font=("Arial", 10, "italic"),
+        ).grid(row=2, column=0, sticky="w")
+
+        for j, col_name in enumerate(conf_matrix1.columns):
+            tk.Label(
+                self.model2_matrices_label, text=col_name, font=("Arial", 10, "bold")
+            ).grid(row=1, column=j + 2, padx=5, pady=5)
+
+        for i, row_name in enumerate(conf_matrix2.index):
+            tk.Label(
+                self.model2_matrices_label, text=row_name, font=("Arial", 10, "bold")
+            ).grid(row=i + 2, column=1, padx=5, pady=5)
+            for j, col_name in enumerate(conf_matrix2.columns):
+                value = conf_matrix2.loc[row_name, col_name]
+                font_style = ("Arial", 10, "bold") if i == j else ("Arial", 10)
+                tk.Label(
+                    self.model2_matrices_label, text=str(value), font=font_style
+                ).grid(row=i + 2, column=j + 2, padx=5, pady=5)
